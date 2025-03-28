@@ -19,16 +19,17 @@ Beyond predicting player trajectories, the embeddings learned by a transformer m
 Due to the sequential nature of our data, we propose the use of an autoregressive model. More specifically, a Transformer, which to the best of our knowledge, has not been used to predict NFL player movement in academic literature (Only in Blog posts).2  We opted to use transformers as opposed to RNNs such as LSTMs, or GRUs because with sequences of up to 1886 feature vectors in length, we believe the Transformer is better suited at capturing the long-term dependencies in the data. 
 
 1. Model inputs: 
-    a. Individual feature vector includes the following information for each player on the field:
 
-        i. Location
-        ii. Direction player is facing 
-        iii. Direction of player movement 
-        iv. OHE of position that player plays (QB, WR, DE, etc...) 
-        v. Weight of player 
-        vi. Height of player  
-        vii. ... 
-        viii. And any other relevant features at a player, play, game, or team level 
+   a. Individual feature vector includes the following information for each player on the field:
+   
+      i. Location
+      ii. Direction player is facing 
+      iii. Direction of player movement 
+      iv. OHE of position that player plays (QB, WR, DE, etc...) 
+      v. Weight of player 
+      vi. Height of player  
+      vii. ... 
+      viii. And any other relevant features at a player, play, game, or team level 
 
    b. Input Sequence: 
 
