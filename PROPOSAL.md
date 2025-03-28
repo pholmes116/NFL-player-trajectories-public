@@ -10,13 +10,20 @@ Generating post-snap player trajectories in American Football (NFL)
 
 Sports analytics has become an integral part of American football, where teams constantly seek data-driven insights to refine their strategies, optimize player performance, and gain a competitive edge. Traditional statistics such as yards gained, or points scored only offer a limited snapshot of on-field events. Modern player tracking data, however, provides a wealth of spatiotemporal information that can be used to examine nuances in player behaviour and team dynamics.  
 
-Despite the growing availability of detailed tracking data, there remains a gap in the ability to anticipate how players will actually move once the ball is “snapped”.1 This project aims to address that gap by building a model that simulates post-snap player trajectories using their pre-snap positions and contextual metadata (e.g., down, distance, formations). Accurately predicting multiple players’ movements in real time is crucial for coaches who want to identify potential mismatches, plan defensive/offensive schemes, and improve in-game decision-making. 
+Despite the growing availability of detailed tracking data, there remains a gap in the ability to anticipate how players will actually move once the ball is “snapped”[^1]. This project aims to address that gap by building a model that simulates post-snap player trajectories using their pre-snap positions and contextual metadata (e.g., down, distance, formations). Accurately predicting multiple players’ movements in real time is crucial for coaches who want to identify potential mismatches, plan defensive/offensive schemes, and improve in-game decision-making. 
 
-Beyond predicting player trajectories, the embeddings learned by a transformer model in this project can power a host of downstream tasks. By distilling rich contextual information—such as individual player tendencies, situational factors, and team-level strategies—into compact vectors, these embeddings become a powerful representation of on-field dynamics. For instance, analysts could cluster player embeddings to discover hidden role similarities or playing styles, informing draft decisions or match-up analyses. 
+Beyond predicting player trajectories, the embeddings learned by a transformer model in this project can power a host of downstream tasks. By distilling rich contextual information—such as individual player tendencies, situational factors, and team-level strategies—into compact vectors, these embeddings become a powerful representation of on-field dynamics. For instance, analysts could cluster player embeddings to discover hidden role similarities or playing styles, informing draft decisions or match-up analyses.
+
+[^1]: In American football, the snap is the action that initiates a play
+    from scrimmage. It occurs when the center (the offensive lineman
+    typically in the middle of the formation) quickly hands or passes
+    the football backward through his legs to the quarterback, holder,
+    or punter. Once the ball is snapped, the offense can begin executing
+    the play, and the defense can react accordingly.
 
 **3. What deep learning methodologies do you plan to use in your project?**
 
-Due to the sequential nature of our data, we propose the use of an autoregressive model. More specifically, a Transformer, which to the best of our knowledge, has not been used to predict NFL player movement in academic literature (Only in Blog posts).2  We opted to use transformers as opposed to RNNs such as LSTMs, or GRUs because with sequences of up to 1886 feature vectors in length, we believe the Transformer is better suited at capturing the long-term dependencies in the data. 
+Due to the sequential nature of our data, we propose the use of an autoregressive model. More specifically, a Transformer, which to the best of our knowledge, has not been used to predict NFL player movement in academic literature (Only in Blog posts[^2].  We opted to use transformers as opposed to RNNs such as LSTMs, or GRUs because with sequences of up to 1886 feature vectors in length, we believe the Transformer is better suited at capturing the long-term dependencies in the data. 
 
 1. Model inputs: 
 
@@ -63,6 +70,10 @@ Due to the sequential nature of our data, we propose the use of an autoregressiv
 6. Loss: 
     a. MSE of actual vs predicted locations of players in the field (after output transformation). 
     b. Incorporate an additional physics inspired loss component during training to penalize impossible behavior. 
+
+[^2]: Samuel Chineau published the following blog post, "**Transformers
+    can generate NFL plays: introducing QB-GPT\" on Medium:
+    https://medium.com/data-science/transformers-can-generate-nfl-plays-introducing-qb-gpt-2d40f16a03eb**
 
 **4. What dataset will you use? Provide information about the dataset, and a URL for the dataset if available. Briefly discuss suitability of the dataset for your problem.**
 
