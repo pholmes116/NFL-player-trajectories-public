@@ -23,7 +23,7 @@ Beyond predicting player trajectories, the embeddings learned by a transformer m
 
 **3. What deep learning methodologies do you plan to use in your project?**
 
-Due to the sequential nature of our data, we propose the use of an autoregressive model. More specifically, a Transformer, which to the best of our knowledge, has not been used to predict NFL player movement in academic literature (Only in Blog posts[^2].  We opted to use transformers as opposed to RNNs such as LSTMs, or GRUs because with sequences of up to 1886 feature vectors in length, we believe the Transformer is better suited at capturing the long-term dependencies in the data. 
+Due to the sequential nature of our data, we propose the use of an autoregressive model. More specifically, a Transformer, which to the best of our knowledge, has not been used to predict NFL player movement in academic literature (Only in Blog posts[^2]).  We opted to use transformers as opposed to RNNs such as LSTMs, or GRUs because with sequences of up to 1886 feature vectors in length, we believe the Transformer is better suited at capturing the long-term dependencies in the data. 
 
 1. Model inputs: 
 
