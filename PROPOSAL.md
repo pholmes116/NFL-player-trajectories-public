@@ -36,22 +36,31 @@ Due to the sequential nature of our data, we propose the use of an autoregressiv
        i. The input sequence will consist of ordered and masked vectors corresponding to all measurements made in a play up to time t. 
 
 3. Model body: 
-    a. Embedding layer 
-    b. Positional encoding
-    c. Masked multi head attention-head 
-    d. Norm and residual layer 
-    e. Multiheaded attention layer
-    f. ....... 
-    g. FF Layer 
-    h. Output layer (Output dim 23*2 for all players + ball for acceleration along the x and y axis) 
-        i. Might use the reparameterization trick for smoother continuous outputs. 
-        ii. If this task is deemed too complicated or computationally intensive, we might consider reducing the number players or features we decide to predict over. 
 
-4. Physics-Informed Output transformation: 
+   a. Embedding layer
+   
+   b. Positional encoding
+
+   c. Masked multi head attention-head 
+
+   d. Norm and residual layer 
+
+   e. Multiheaded attention layer
+
+   f. ....... 
+
+   g. FF Layer 
+
+   h. Output layer (Output dim 23*2 for all players + ball for acceleration along the x and y axis) 
+
+         i. Might use the reparameterization trick for smoother continuous outputs. 
+         ii. If this task is deemed too complicated or computationally intensive, we might consider reducing the number players or features we decide to predict over. 
+
+5. Physics-Informed Output transformation: 
     a. Instead of directly predicting positions, the model will output acceleration 
     b. With numerical Integration methods we will integrate acceleration to recover player positions. 
 
-5. Loss: 
+6. Loss: 
     a. MSE of actual vs predicted locations of players in the field (after output transformation). 
     b. Incorporate an additional physics inspired loss component during training to penalize impossible behavior. 
 
