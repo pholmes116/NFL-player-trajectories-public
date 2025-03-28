@@ -3,9 +3,11 @@
 Please provide the information requested in the following form. Try provide concise and informative answers.
 
 **1. What is your project title?**
+
 Generating post-snap player trajectories in American Football (NFL) 
 
 **2. What is the problem that you want to solve?**
+
 Sports analytics has become an integral part of American football, where teams constantly seek data-driven insights to refine their strategies, optimize player performance, and gain a competitive edge. Traditional statistics such as yards gained, or points scored only offer a limited snapshot of on-field events. Modern player tracking data, however, provides a wealth of spatiotemporal information that can be used to examine nuances in player behaviour and team dynamics.  
 
 Despite the growing availability of detailed tracking data, there remains a gap in the ability to anticipate how players will actually move once the ball is “snapped”.1 This project aims to address that gap by building a model that simulates post-snap player trajectories using their pre-snap positions and contextual metadata (e.g., down, distance, formations). Accurately predicting multiple players’ movements in real time is crucial for coaches who want to identify potential mismatches, plan defensive/offensive schemes, and improve in-game decision-making. 
@@ -13,6 +15,7 @@ Despite the growing availability of detailed tracking data, there remains a gap 
 Beyond predicting player trajectories, the embeddings learned by a transformer model in this project can power a host of downstream tasks. By distilling rich contextual information—such as individual player tendencies, situational factors, and team-level strategies—into compact vectors, these embeddings become a powerful representation of on-field dynamics. For instance, analysts could cluster player embeddings to discover hidden role similarities or playing styles, informing draft decisions or match-up analyses. 
 
 **3. What deep learning methodologies do you plan to use in your project?**
+
 Due to the sequential nature of our data, we propose the use of an autoregressive model. More specifically, a Transformer, which to the best of our knowledge, has not been used to predict NFL player movement in academic literature (Only in Blog posts).2  We opted to use transformers as opposed to RNNs such as LSTMs, or GRUs because with sequences of up to 1886 feature vectors in length, we believe the Transformer is better suited at capturing the long-term dependencies in the data. 
 
 1. Model inputs: 
@@ -49,6 +52,7 @@ Due to the sequential nature of our data, we propose the use of an autoregressiv
     b. Incorporate an additional physics inspired loss component during training to penalize impossible behavior. 
 
 **4. What dataset will you use? Provide information about the dataset, and a URL for the dataset if available. Briefly discuss suitability of the dataset for your problem.**
+
 We will use the dataset provided in the Kaggle challenge competition NFL Big Data Bowl 2025. This is a sport analytics competition run by the USA’s National Football League (NFL), which has had seven editions already.  
 
 The dataset is composed of the following tables with data from the 2022 season:
@@ -82,6 +86,7 @@ Predicting plays in the National Football League:
 https://journals.sagepub.com/doi/full/10.3233/JSA-190348#ref007 
 
 **Please indicate whether your project proposal is ready for review (Yes/No):**
+
 Yes
 
 ## Feedback (to be provided by the course lecturer)
