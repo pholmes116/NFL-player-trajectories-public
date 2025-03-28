@@ -77,7 +77,7 @@ Due to the sequential nature of our data, we propose the use of an autoregressiv
 
 **4. What dataset will you use? Provide information about the dataset, and a URL for the dataset if available. Briefly discuss suitability of the dataset for your problem.**
 
-We will use the dataset provided in the Kaggle challenge competition NFL Big Data Bowl 2025. This is a sport analytics competition run by the USA’s National Football League (NFL), which has had seven editions already.  
+We will use the dataset provided in the Kaggle challenge competition [NFL Big Data Bowl 2025](https://www.kaggle.com/competitions/nfl-big-data-bowl-2025). This is a sport analytics competition run by the USA’s National Football League (NFL), which has had seven editions already.  
 
 The dataset is composed of the following tables with data from the 2022 season:
 
@@ -87,7 +87,7 @@ The dataset is composed of the following tables with data from the 2022 season:
 4. Player-play data: player-level statistics for each play (rushing yards, passing yards, interceptions, etc.). 
 5. Tracking data: spatiotemporal tracking data for players on the field with a frequency of 10 frames per second (position, speed, orientation, and events at each timestamp). 
 
-The tracking data comes from Neft Gen Stats, an advanced data collection and analysis system used by the National Football League (NFL) to track and measure player performance beyond traditional statistics. The system captures detailed information about player movements, speed, acceleration, and positioning on the field during games. It uses radio frequency sensors strapped to the shoulder pads of the players to capture their position and their upper-body orientation. 
+The tracking data comes from [Neft Gen Stats](https://operations.nfl.com/gameday/technology/nfl-next-gen-stats/), an advanced data collection and analysis system used by the National Football League (NFL) to track and measure player performance beyond traditional statistics. The system captures detailed information about player movements, speed, acceleration, and positioning on the field during games. It uses radio frequency sensors strapped to the shoulder pads of the players to capture their position and their upper-body orientation. 
 
 One advantage of this dataset is the fact that it requires no data cleaning. It is already completely standardized. This means that we will not have to resort to external sources, and that our data processing effort will solely involve merging and sub-setting the data to suit our purposes and doing feature engineering. Additionally, with a tracking rate of 10 frames per second, it is incredibly granular, so we have enough data for training purposes. 
 
