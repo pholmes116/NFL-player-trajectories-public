@@ -20,8 +20,9 @@ Due to the sequential nature of our data, we propose the use of an autoregressiv
 
 1. Model inputs: 
     a. Individual feature vector includes the following information for each player on the field: 
-        i. Location  
-        ii. Direction player is facing 
+
+       i. Location
+       ii. Direction player is facing 
         iii. Direction of player movement 
         iv. OHE of position that player plays (QB, WR, DE, etc...) 
         v. Weight of player 
@@ -31,7 +32,7 @@ Due to the sequential nature of our data, we propose the use of an autoregressiv
     b. Input Sequence: 
         i. The input sequence will consist of ordered and masked vectors corresponding to all measurements made in a play up to time t. 
 
-2. Model body: 
+3. Model body: 
     a. Embedding layer 
     b. Positional encoding
     c. Masked multi head attention-head 
@@ -43,11 +44,11 @@ Due to the sequential nature of our data, we propose the use of an autoregressiv
         i. Might use the reparameterization trick for smoother continuous outputs. 
         ii. If this task is deemed too complicated or computationally intensive, we might consider reducing the number players or features we decide to predict over. 
 
-3. Physics-Informed Output transformation: 
+4. Physics-Informed Output transformation: 
     a. Instead of directly predicting positions, the model will output acceleration 
     b. With numerical Integration methods we will integrate acceleration to recover player positions. 
 
-4. Loss: 
+5. Loss: 
     a. MSE of actual vs predicted locations of players in the field (after output transformation). 
     b. Incorporate an additional physics inspired loss component during training to penalize impossible behavior. 
 
