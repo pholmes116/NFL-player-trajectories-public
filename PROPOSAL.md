@@ -22,14 +22,14 @@ Due to the sequential nature of our data, we propose the use of an autoregressiv
 
    a. Individual feature vector includes the following information for each player on the field:
    
-      i. Location
-      ii. Direction player is facing 
-      iii. Direction of player movement 
-      iv. OHE of position that player plays (QB, WR, DE, etc...) 
-      v. Weight of player 
-      vi. Height of player  
-      vii. ... 
-      viii. And any other relevant features at a player, play, game, or team level 
+         i. Location
+         ii. Direction player is facing 
+         iii. Direction of player movement 
+         iv. OHE of position that player plays (QB, WR, DE, etc...) 
+         v. Weight of player 
+         vi. Height of player  
+         vii. ... 
+         viii. And any other relevant features at a player, play, game, or team level 
 
    b. Input Sequence: 
 
