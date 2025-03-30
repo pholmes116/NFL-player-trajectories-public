@@ -114,3 +114,7 @@ https://journals.sagepub.com/doi/full/10.3233/JSA-190348#ref007
 Yes
 
 ## Feedback (to be provided by the course lecturer)
+
+[MV] 30 March 2025. **Approved**.
+
+Sounds interesting. The trajectory prediction problem has been explored using transformers in other application settings, such as predicting pedestrian movements, as well as the movements of tennis players and footballers. This could be considered as part of the related work for comparison. From your proposal, I understand that you will be predicting the simultaneous movements of multiple players. You may compare your transformer-based approach with some baseline models, such as RNNs, which have been used in the context of predicting player trajectories in the NFL.
