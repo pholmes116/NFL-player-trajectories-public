@@ -1,0 +1,19 @@
+name: NFL_env
+channels:
+  - https://repo.anaconda.com/pkgs/main
+  - https://repo.anaconda.com/pkgs/r
+  - https://repo.anaconda.com/pkgs/msys2
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - scikit-learn
+  - pandas
+  - matplotlib
+  - numpy
+  - dask
+  - seaborn
+  - scipy
+  - requests
+  - kaggle
+prefix: C:\Users\juanb\.conda\envs\NFL_env
