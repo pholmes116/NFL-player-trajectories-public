@@ -1,0 +1,215 @@
+# nfl_tracking_polars_pipeline.py
+"""
+End‑to‑end feature‑engineering pipeline rewritten in **Polars** for maximum
+speed and low‑memory footprint.
+
+Folder layout (same as original):
+└── NFL_data/
+    ├── games.csv
+    ├── plays.csv
+    ├── player_play.csv
+    ├── players.csv
+    └── tracking_week_1.csv
+"""
+
+from __future__ import annotations
+
+import numpy as np
+import polars as pl
+import os
+
+FOLDER = "raw_data/"
+TRACKING_PATTERN = FOLDER + "tracking_week_*.csv"  # matches week_1 … week_9
+SAVE_FOLDER = "processed_data/"
+
+os.makedirs(FOLDER, exist_ok=True)
+os.makedirs(SAVE_FOLDER, exist_ok=True)
+
+# ---------------------------------------------------------------------------
+# Utility expressions / helpers (unchanged)
+# ---------------------------------------------------------------------------
+
+_DEG2RAD = np.pi / 180.0
+
+def _height_to_cm() -> pl.Expr:
+    return (
+        pl.col("height").str.split("-").list.get(0).cast(pl.Int32()) * 30.48
+        + pl.col("height").str.split("-").list.get(1).cast(pl.Int32()) * 2.54
+    )
+
+def _weight_to_kg() -> pl.Expr:
+    return pl.col("weight") * 0.453_592
+
+def _standard_scale(expr: pl.Expr, mean: float, std: float) -> pl.Expr:
+    return (expr - mean) / std
+
+def _minmax_scale(expr: pl.Expr, vmin: float, vmax: float) -> pl.Expr:
+    return (expr - vmin) / (vmax - vmin)
+
+def _sin_deg(expr: pl.Expr) -> pl.Expr:
+    return (expr * _DEG2RAD).sin()
+
+def _cos_deg(expr: pl.Expr) -> pl.Expr:
+    return (expr * _DEG2RAD).cos()
+
+def _normalise_clock() -> pl.Expr:
+    mins = pl.col("gameClock").str.split(":").list.get(0).cast(pl.Int32())
+    secs = pl.col("gameClock").str.split(":").list.get(1).cast(pl.Int32())
+    return ((mins * 60 + secs) / 900).alias("gameClock")
+
+def add_yards_to_score(df: pl.DataFrame) -> pl.DataFrame:
+    return df.with_columns(
+        pl.when(pl.col("yardlineSide") == pl.col("possessionTeam"))
+        .then(100 - pl.col("yardlineNumber"))
+        .otherwise(pl.col("yardlineNumber"))
+        .alias("yardsToScore")
+    )
+
+# ---------------------------------------------------------------------------
+# 1. Players table (unchanged)
+# ---------------------------------------------------------------------------
+
+players = (
+    pl.read_csv(FOLDER + "players.csv")
+    .with_columns([
+        _height_to_cm().alias("heightMetric"),
+        _weight_to_kg().alias("weightMetric"),
+        pl.col("position").cast(pl.Categorical).to_physical().alias("position_token"),
+    ])
+    .select(["nflId", "heightMetric", "weightMetric", "position_token"])
+)
+
+stats = players.select([
+    pl.mean("heightMetric").alias("hm_mean"),
+    pl.std("heightMetric").alias("hm_std"),
+    pl.mean("weightMetric").alias("wm_mean"),
+    pl.std("weightMetric").alias("wm_std"),
+]).to_dict(as_series=False)
+
+players = players.with_columns([
+    _standard_scale(pl.col("heightMetric"), stats["hm_mean"][0], stats["hm_std"][0]).alias("heightMetric"),
+    _standard_scale(pl.col("weightMetric"), stats["wm_mean"][0], stats["wm_std"][0]).alias("weightMetric"),
+])
+
+# ---------------------------------------------------------------------------
+# 2. Plays table (+ yardsToScore) – unchanged
+# ---------------------------------------------------------------------------
+
+plays_raw = pl.read_csv(
+    FOLDER + "plays.csv",
+    null_values="NA",        # treat string 'NA' in numeric cols as null
+    infer_schema_length=10000,
+)
+
+plays = (
+    plays_raw.select([
+        "gameId", "playId", "quarter", "down", "yardsToGo", "possessionTeam", "defensiveTeam",
+        "yardlineSide", "yardlineNumber", "absoluteYardlineNumber", "gameClock", "preSnapHomeScore", "preSnapVisitorScore",
+    ])
+    .to_dummies(columns=["quarter", "down"], drop_first=True)
+    .with_columns([
+        _normalise_clock(),
+        (pl.col("preSnapHomeScore") / 50).alias("preSnapHomeScore"),
+        (pl.col("preSnapVisitorScore") / 50).alias("preSnapVisitorScore"),
+    ])
+    .pipe(add_yards_to_score)
+    .drop(["possessionTeam", "defensiveTeam", "yardlineSide", "yardlineNumber", "absoluteYardlineNumber"])
+)
+
+# ---------------------------------------------------------------------------
+# 3. Tracking data (weeks 1–9)
+# ---------------------------------------------------------------------------
+
+TRACKING_FILES = [FOLDER + f"tracking_week_{i}.csv" for i in range(1, 10)]
+
+def _load_tracking_csv(path: str) -> pl.DataFrame:
+    """Load a single week of tracking data with consistent schema/options."""
+    return pl.read_csv(
+        path,
+        null_values="NA",            # treat 'NA' as null
+        infer_schema_length=10000,
+        schema_overrides={"nflId": pl.Int64},  # allow nulls in nflId (football)
+    )
+
+tracking_raw = pl.concat([_load_tracking_csv(p) for p in TRACKING_FILES])
+
+tracking = (
+    tracking_raw.with_columns([
+        _sin_deg(pl.col("o")).alias("o_sin"),
+        _cos_deg(pl.col("o")).alias("o_cos"),
+        _sin_deg(pl.col("dir")).alias("dir_sin"),
+        _cos_deg(pl.col("dir")).alias("dir_cos"),
+    ])
+    .drop(["displayName", "jerseyNumber", "time", "frameType", "playDirection", "o", "dir", "club"])
+)
+
+# scale spatial/kinematic features to [0,1] across *all* weeks
+SCALE_COLS = ["x", "y", "s", "a"]
+mins = tracking.select([pl.min(c).alias(f"{c}_min") for c in SCALE_COLS]).to_dict(as_series=False)
+maxs = tracking.select([pl.max(c).alias(f"{c}_max") for c in SCALE_COLS]).to_dict(as_series=False)
+for c in SCALE_COLS:
+    tracking = tracking.with_columns(_minmax_scale(pl.col(c), mins[f"{c}_min"][0], maxs[f"{c}_max"][0]).alias(c))
+
+# ---------------------------------------------------------------------------
+# 3a. One‑hot encode `event`
+# ---------------------------------------------------------------------------
+
+event_df = (
+    tracking.select(["gameId", "playId", "frameId", "event"])
+    .with_columns(pl.col("event").fill_null("Nothing"))
+    .to_dummies(columns=["event"], drop_first=True)
+    .unique()
+)
+tracking = tracking.drop("event")
+
+# ---------------------------------------------------------------------------
+# 4. Flatten 23‑entity frames
+# ---------------------------------------------------------------------------
+
+VALUE_COLS = ["x", "y", "s", "a", "dis", "o_sin", "o_cos", "dir_sin", "dir_cos"]
+
+complete_frames = (
+    tracking.group_by(["gameId", "playId", "frameId"]).len()
+    .filter(pl.col("len") == 23)
+    .select(["gameId", "playId", "frameId"])
+)
+tracking_complete = tracking.join(complete_frames, on=["gameId", "playId", "frameId"], how="inner")
+
+tracking_ordered = (
+    tracking_complete
+    .sort(["gameId", "playId", "frameId", "nflId"], nulls_last=True)
+    .with_columns(pl.int_range(1, 24).over(["gameId", "playId", "frameId"]).alias("entity_order"))
+)
+
+agg_exprs = [pl.col(c).sort_by("entity_order").alias(c) for c in VALUE_COLS]
+flat_lists = tracking_ordered.group_by(["gameId", "playId", "frameId"]).agg(agg_exprs)
+
+flat_wide = flat_lists.select(["gameId", "playId", "frameId"])
+for m in VALUE_COLS:
+    flat_wide = flat_wide.join(
+        flat_lists.select(
+            ["gameId", "playId", "frameId"] + [pl.col(m).list.get(i).alias(f"{m}_{i+1}") for i in range(23)]
+        ),
+        on=["gameId", "playId", "frameId"],
+        how="left",
+    )
+
+# ---------------------------------------------------------------------------
+# 5. Merge context tables and write
+# ---------------------------------------------------------------------------
+
+model_input = (
+    flat_wide
+    .join(event_df, on=["gameId", "playId", "frameId"], how="left")
+    .join(plays, on=["gameId", "playId"], how="left")
+)
+
+model_input = (
+    model_input
+    .drop(['o_sin_23', 'o_cos_23', 'dir_sin_23', 'dir_cos_23'])
+    .sort(["gameId", "playId", "frameId"])
+)
+
+
+model_input.write_parquet(SAVE_FOLDER + "model_input.parquet")
+print(f"Pipeline finished — wrote model_input.parquet ({len(model_input)} rows across 9 weeks)")
