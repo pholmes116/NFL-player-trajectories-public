@@ -35,8 +35,12 @@ NUM_FEATS: int = NUM_ENTITIES * len(COORDS)  # 46
 SEQ_MIN_LEN: int = 2
 MAX_SEQ_LEN: int = 100  # default – overridable via CLI
 
-INPUT_FEATURES: list[str] = [f"{c}_{i}" for i in range(1, NUM_ENTITIES + 1) for c in COORDS]
-TARGET_FEATURES: list[str] = INPUT_FEATURES  # identical – customise if needed
+POSITIONAL_FEATURES = [f"{c}_{i}"
+                  for i in range(1, NUM_ENTITIES + 1)
+                  for c in COORDS]
+
+INPUT_FEATURES = POSITIONAL_FEATURES.copy()  # Change as needeed
+TARGET_FEATURES = POSITIONAL_FEATURES.copy()  # Change as needeed
 
 # ════════════════════════════════════════════════════════════════════════════════
 # Helpers
