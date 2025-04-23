@@ -19,8 +19,10 @@ import polars as pl
 import os
 
 FOLDER = "raw_data/"
-TRACKING_PATTERN = FOLDER + "tracking_week_*.csv"  # matches week_1 … week_9
 SAVE_FOLDER = "processed_data/"
+FILE_NAME = "model_input.parquet"
+N_TRACKING_FILES = 1
+TRACKING_FILES = [FOLDER + f"tracking_week_{i}.csv" for i in range(1, N_TRACKING_FILES + 1)]
 
 os.makedirs(FOLDER, exist_ok=True)
 os.makedirs(SAVE_FOLDER, exist_ok=True)
@@ -120,8 +122,6 @@ plays = (
 # 3. Tracking data (weeks 1–9)
 # ---------------------------------------------------------------------------
 
-TRACKING_FILES = [FOLDER + f"tracking_week_{i}.csv" for i in range(1, 10)]
-
 def _load_tracking_csv(path: str) -> pl.DataFrame:
     """Load a single week of tracking data with consistent schema/options."""
     return pl.read_csv(
@@ -211,5 +211,5 @@ model_input = (
 )
 
 
-model_input.write_parquet(SAVE_FOLDER + "model_input.parquet")
-print(f"Pipeline finished — wrote model_input.parquet ({len(model_input)} rows across 9 weeks)")
+model_input.write_parquet(SAVE_FOLDER + FILE_NAME)
+print(f"Pipeline finished — wrote model_input.parquet ({len(model_input)} rows across {N_TRACKING_FILES} weeks)")
