@@ -21,7 +21,7 @@ import os
 FOLDER = "raw_data/"
 SAVE_FOLDER = "processed_data/"
 FILE_NAME = "model_input.parquet"
-N_TRACKING_FILES = 9
+N_TRACKING_FILES = 1
 TRACKING_FILES = [FOLDER + f"tracking_week_{i}.csv" for i in range(1, N_TRACKING_FILES + 1)]
 
 os.makedirs(FOLDER, exist_ok=True)

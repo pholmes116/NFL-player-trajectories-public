@@ -42,6 +42,10 @@ POSITIONAL_FEATURES = [f"{c}_{i}"
 INPUT_FEATURES = POSITIONAL_FEATURES.copy()  # Change as needeed
 TARGET_FEATURES = POSITIONAL_FEATURES.copy()  # Change as needeed
 
+DATA_FOLDER = "processed_data/"
+INPUT_DATA_NAME = "model_input.parquet"
+OUTPUT_DATA_NAME = "transformer_dataset"
+
 # ════════════════════════════════════════════════════════════════════════════════
 # Helpers
 # ════════════════════════════════════════════════════════════════════════════════
@@ -102,8 +106,8 @@ def example_generator(path: str | Path, max_len: int, limit_plays: int | None):
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser("nfl_transformer_dataset (streaming)")
-    p.add_argument("--parquet", type=str, default="processed_data/model_input.parquet", help="Path to model_input.parquet")
-    p.add_argument("--save-dir", type=str, default="processed_data/transformer_dataset", help="Output directory")
+    p.add_argument("--parquet", type=str, default= DATA_FOLDER + INPUT_DATA_NAME, help="Path to model_input.parquet")
+    p.add_argument("--save-dir", type=str, default= DATA_FOLDER + OUTPUT_DATA_NAME, help="Output directory")
     p.add_argument("--max-len", type=int, default=MAX_SEQ_LEN, help="Pad/truncation length (frames)")
     p.add_argument("--n-plays", type=int, default=None, help="Sample first N plays (omit ⇒ all plays)")
     return p.parse_args()
@@ -112,7 +116,7 @@ def parse_args() -> argparse.Namespace:
 def main():
     args = parse_args()
 
-    print("/n ⏳ Streaming examples … this may take a while but uses little RAM. /n ")
+    print("\n ⏳ Streaming examples … this may take a while but uses little RAM. \n ")
     ds = tf.data.Dataset.from_generator(
         lambda: example_generator(args.parquet, args.max_len, args.n_plays),
         output_signature=(
