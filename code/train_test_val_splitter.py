@@ -35,7 +35,7 @@ def parse_args() -> argparse.Namespace:
                    help="Folder containing tracking_week_*.csv files")
     p.add_argument("--out-dir",   type=str, default="processed_data",
                    help="Where to write train_test_val.parquet")
-    p.add_argument("--n-weeks",   type=int, default=2,
+    p.add_argument("--n-weeks",   type=int, default=9,
                    help="Number of tracking weeks present")
     p.add_argument("--train-ratio", type=float, default=0.70, help="Train proportion")
     p.add_argument("--val-ratio",   type=float, default=0.10, help="Val proportion")
