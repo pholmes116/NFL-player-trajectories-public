@@ -17,11 +17,13 @@ from __future__ import annotations
 import numpy as np
 import polars as pl
 import os
+import json
 
 FOLDER = "raw_data/"
 SAVE_FOLDER = "processed_data/"
-FILE_NAME = "model_input.parquet"
-N_TRACKING_FILES = 1
+FILE_NAME = "model_input_2.parquet"
+N_TRACKING_FILES = 2
+
 TRACKING_FILES = [FOLDER + f"tracking_week_{i}.csv" for i in range(1, N_TRACKING_FILES + 1)]
 
 os.makedirs(FOLDER, exist_ok=True)
@@ -67,6 +69,11 @@ def add_yards_to_score(df: pl.DataFrame) -> pl.DataFrame:
         .alias("yardsToScore")
     )
 
+def _in_posession(df: pl.DataFrame) -> pl.DataFrame:
+    return df.with_columns(
+        pl.when(pl.col("possessionTeam") == pl.col("club")).then(1).otherwise(0).alias("in_possession")
+    )
+
 # ---------------------------------------------------------------------------
 # 1. Players table (unchanged)
 # ---------------------------------------------------------------------------
@@ -106,7 +113,7 @@ plays_raw = pl.read_csv(
 plays = (
     plays_raw.select([
         "gameId", "playId", "quarter", "down", "yardsToGo", "possessionTeam", "defensiveTeam",
-        "yardlineSide", "yardlineNumber", "absoluteYardlineNumber", "gameClock", "preSnapHomeScore", "preSnapVisitorScore",
+        "yardlineSide", "yardlineNumber", "absoluteYardlineNumber", "gameClock", "preSnapHomeScore", "preSnapVisitorScore"
     ])
     .to_dummies(columns=["quarter", "down"], drop_first=True)
     .with_columns([
@@ -115,7 +122,7 @@ plays = (
         (pl.col("preSnapVisitorScore") / 50).alias("preSnapVisitorScore"),
     ])
     .pipe(add_yards_to_score)
-    .drop(["possessionTeam", "defensiveTeam", "yardlineSide", "yardlineNumber", "absoluteYardlineNumber"])
+    .drop(["defensiveTeam", "yardlineSide", "yardlineNumber", "absoluteYardlineNumber"])
 )
 
 # ---------------------------------------------------------------------------
@@ -140,15 +147,70 @@ tracking = (
         _sin_deg(pl.col("dir")).alias("dir_sin"),
         _cos_deg(pl.col("dir")).alias("dir_cos"),
     ])
-    .drop(["displayName", "jerseyNumber", "time", "frameType", "playDirection", "o", "dir", "club"])
+    .drop(["displayName", "jerseyNumber", "time", "frameType", "playDirection", "o", "dir"])
 )
 
-# scale spatial/kinematic features to [0,1] across *all* weeks
-SCALE_COLS = ["x", "y", "s", "a"]
-mins = tracking.select([pl.min(c).alias(f"{c}_min") for c in SCALE_COLS]).to_dict(as_series=False)
-maxs = tracking.select([pl.max(c).alias(f"{c}_max") for c in SCALE_COLS]).to_dict(as_series=False)
+# --- Normalize x and y based on domain knowledge (field size) ---
+tracking = tracking.with_columns([
+    (pl.col("x") / 120.0).alias("x"),
+    (pl.col("y") / 53.3).alias("y"),
+])
+
+# --- Min-max scale s and a ---
+SCALE_COLS = ["s", "a"]
+scale_mins = tracking.select([pl.min(c).alias(f"{c}_min") for c in SCALE_COLS]).to_dict(as_series=False)
+scale_maxs = tracking.select([pl.max(c).alias(f"{c}_max") for c in SCALE_COLS]).to_dict(as_series=False)
+
 for c in SCALE_COLS:
-    tracking = tracking.with_columns(_minmax_scale(pl.col(c), mins[f"{c}_min"][0], maxs[f"{c}_max"][0]).alias(c))
+    tracking = tracking.with_columns(_minmax_scale(pl.col(c), scale_mins[f"{c}_min"][0], scale_maxs[f"{c}_max"][0]).alias(c))
+
+# --- Collect and save normalization/standardization info ---
+scaling_info = {
+    "x": {"min": 0.0, 
+          "max": 120.0, 
+          "method": "normalize"
+    },
+    "y": {"min": 0.0, 
+          "max": 53.3, 
+          "method": "normalize"
+    },
+    "s": {
+        "min": scale_mins["s_min"][0],
+        "max": scale_maxs["s_max"][0],
+        "method": "minmax"
+    },
+    "a": {
+        "min": scale_mins["a_min"][0],
+        "max": scale_maxs["a_max"][0],
+        "method": "minmax"
+    },
+    "heightMetric": {
+        "mean": stats["hm_mean"][0],
+        "std": stats["hm_std"][0],
+        "method": "zscore"
+    },
+    "weightMetric": {
+        "mean": stats["wm_mean"][0],
+        "std": stats["wm_std"][0],
+        "method": "zscore"
+    },
+    "preSnapHomeScore": {
+        'divisor': 50.0,
+        "method": "divisor"
+    },
+    "preSnapVisitorScore": {
+        'divisor': 50.0,
+        "method": "divisor"
+    },
+    "gameClock": {
+        "min": 0.0,
+        "max": 900.0,
+        "method": "minmax"
+    }
+
+}
+with open(SAVE_FOLDER + "scaling_stats.json", "w") as f:
+    json.dump(scaling_info, f, indent=2)
 
 # ---------------------------------------------------------------------------
 # 3a. One‑hot encode `event`
@@ -173,12 +235,37 @@ complete_frames = (
     .filter(pl.col("len") == 23)
     .select(["gameId", "playId", "frameId"])
 )
-tracking_complete = tracking.join(complete_frames, on=["gameId", "playId", "frameId"], how="inner")
 
+tracking_complete = (
+    tracking.join(                     
+        complete_frames,
+        on=["gameId", "playId", "frameId"],
+        how="inner",
+    )
+    .join(                             # add possessionTeam once
+        plays.select(["gameId", "playId", "possessionTeam"]).unique(),
+        on=["gameId", "playId"],
+        how="left",
+    )
+)
 tracking_ordered = (
     tracking_complete
-    .sort(["gameId", "playId", "frameId", "nflId"], nulls_last=True)
-    .with_columns(pl.int_range(1, 24).over(["gameId", "playId", "frameId"]).alias("entity_order"))
+    .with_columns([
+        # 0 → offense, 1 → defense, 2 → ball  (lower comes first)
+        (
+            pl.when(pl.col("nflId").is_null())                     # ball
+              .then(2)
+              .when(pl.col("possessionTeam") == pl.col("club"))    # offense
+              .then(0)
+              .otherwise(1)                                        # defense
+        ).alias("order_key")
+    ])
+    # secondary sort keeps ordering deterministic and stable
+    .sort(["gameId", "playId", "frameId", "order_key", "nflId"], nulls_last=True)
+    .with_columns(
+        pl.int_range(1, 24).over(["gameId", "playId", "frameId"]).alias("entity_order")
+    )
+    .drop(["order_key", "possessionTeam"])  # no longer needed
 )
 
 agg_exprs = [pl.col(c).sort_by("entity_order").alias(c) for c in VALUE_COLS]
