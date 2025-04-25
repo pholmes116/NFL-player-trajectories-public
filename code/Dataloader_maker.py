@@ -31,9 +31,10 @@ import tensorflow as tf
 # ════════════════════════════════════════════════════════════════════════════════
 NUM_ENTITIES: int = 23
 COORDS: list[str] = ["x", "y"]
-NUM_FEATS: int = NUM_ENTITIES * len(COORDS)  # 46
+NUM_FEATS: int = NUM_ENTITIES * len(COORDS)          # 46
+META_LEN: int = 4                                    # gameId, playId, split, firstFrameId, 
 SEQ_MIN_LEN: int = 2
-MAX_SEQ_LEN: int = 100  # default – overridable via CLI
+MAX_SEQ_LEN: int = 100
 
 POSITIONAL_FEATURES = [f"{c}_{i}"
                   for i in range(1, NUM_ENTITIES + 1)
@@ -43,8 +44,11 @@ INPUT_FEATURES = POSITIONAL_FEATURES.copy()  # Change as needeed
 TARGET_FEATURES = POSITIONAL_FEATURES.copy()  # Change as needeed
 
 DATA_FOLDER = "processed_data/"
-INPUT_DATA_NAME = "model_input.parquet"
+INPUT_DATA_NAME = "model_input_2.parquet"
 OUTPUT_DATA_NAME = "transformer_dataset"
+
+# Lookup Table for train test val split
+SPLIT_PATH = DATA_FOLDER + "train_test_val.parquet"
 
 # ════════════════════════════════════════════════════════════════════════════════
 # Helpers
@@ -85,19 +89,40 @@ def _load_play(path: str | Path, gid: int, pid: int) -> pl.DataFrame:
     )
 
 
-def example_generator(path: str | Path, max_len: int, limit_plays: int | None):
-    """Yield `(X_padded, y_vec)` pairs one at a time — constant memory."""
+def example_generator(split_map: dict, path: str | Path, max_len: int, limit_plays: int | None):
     play_keys = list(_iter_play_keys(path, limit=limit_plays))
+
     for gid, pid in tqdm(play_keys, desc="Generating examples", unit="play"):
+        split_id = split_map.get((gid, pid))
+        if split_id is None:
+            continue
+
         play_df = _load_play(path, gid, pid)
         if play_df.height < SEQ_MIN_LEN:
             continue
 
+        frame_ids = play_df["frameId"].to_numpy()
         arr = play_df.select(INPUT_FEATURES).to_numpy()
-        for t in range(arr.shape[0] - 1):
-            x_seq = arr[: t + 1]
+
+        for t in range(SEQ_MIN_LEN-1, arr.shape[0]-1):
+            # Original sequence (may be longer than max_len)
+            raw_seq = arr[: t + 1]
+            
+            # Calculate first frame index AFTER truncation
+            start_idx = max(0, (t + 1) - max_len)
+            first_frame_id = int(frame_ids[start_idx])
+
+            # Pad/truncate sequence
+            x_seq = pad_left(raw_seq, max_len)
             y_vec = arr[t + 1]
-            yield pad_left(x_seq, max_len), y_vec.astype(np.float32)
+
+            meta_vec = np.array(
+                [gid, pid, split_id, first_frame_id],  # Now tracks actual first frame
+                dtype=np.int32
+            )
+
+            yield meta_vec, x_seq, y_vec.astype(np.float32)
+
 
 
 # ════════════════════════════════════════════════════════════════════════════════
@@ -114,14 +139,34 @@ def parse_args() -> argparse.Namespace:
 
 
 def main():
+    split_tbl = (
+        pl.read_parquet(SPLIT_PATH, columns=["gameId", "playId", "split"])
+        .unique([ "gameId", "playId" ])               # ◀ safety
+        .with_columns(
+            pl.when(pl.col("split") == "train").then(0)
+                .when(pl.col("split") == "val").then(1)
+                .otherwise(2)
+                .alias("split_id")
+        )
+        .select(["gameId", "playId", "split_id"])
+        .to_dict(as_series=False)
+    )
+
+    split_map = {
+        (g, p): s  for g, p, s in zip(split_tbl["gameId"],
+                                    split_tbl["playId"],
+                                    split_tbl["split_id"])
+    }
+
     args = parse_args()
 
     print("\n ⏳ Streaming examples … this may take a while but uses little RAM. \n ")
     ds = tf.data.Dataset.from_generator(
-        lambda: example_generator(args.parquet, args.max_len, args.n_plays),
+        lambda: example_generator(split_map, args.parquet, args.max_len, args.n_plays),
         output_signature=(
+            tf.TensorSpec(shape=(META_LEN,),            dtype=tf.int32),   # meta_vec
             tf.TensorSpec(shape=(args.max_len, NUM_FEATS), dtype=tf.float32),
-            tf.TensorSpec(shape=(NUM_FEATS,), dtype=tf.float32),
+            tf.TensorSpec(shape=(NUM_FEATS,),           dtype=tf.float32),
         ),
     )
 
