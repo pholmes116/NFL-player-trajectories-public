@@ -1,3 +1,5 @@
 *.csv
 raw_data/*
 processed_data/*
+*.pyc
+*.h5
