@@ -1,5 +1,11 @@
-*.csv
+# DIRECTORIES
 raw_data/*
 processed_data/*
+weights/*
+
+# FILES_TYPES
 *.pyc
 *.h5
+*.csv
+
+
