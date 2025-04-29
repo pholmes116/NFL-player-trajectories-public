@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import numpy as np
 from matplotlib.lines import Line2D
+import pandas as pd
 
 # Default trajectory colors
 DEFAULT_OFFENSE_COLOR = 'blue'
@@ -251,5 +252,108 @@ def plot_trajectories(sequence,
 
     ax.legend(handles=handles, loc='center right')
 
-
     return (fig, ax) if 'fig' in locals() else ax
+
+
+def extract_full_sequence(play_df):
+    """
+    Given a DataFrame for a single play (with columns ['frameId','X','y',…]),
+    where each X is a tf.Tensor or array of shape (1, window_size, 46)
+    and each y is (1, 46), returns a tf.Tensor of shape
+    (1, total_frames, 46) spanning every frame, including the very last one.
+    """
+    # 1) sort windows by their starting frame
+    df = play_df.sort_values('frameId').reset_index(drop=True)
+    if df.empty:
+        raise ValueError("play_df is empty!")
+    
+    # 2) extract X‐windows and final‐frame labels
+    X_windows = df['X'].tolist()   # each (1, W, 46)
+    y_labels   = df['y'].tolist()   # each (1, 46)
+    
+    # 3) normalize to tf.Tensor
+    def to_tf(t):
+        return t if isinstance(t, tf.Tensor) else tf.convert_to_tensor(t, tf.float32)
+    X_windows = [to_tf(w) for w in X_windows]
+    y_labels   = [to_tf(y) for y in y_labels]
+    
+    # 4) build the continuous sequence from X:
+    #    - take all W frames from the first window
+    sequence = X_windows[0][0]                # (W, 46)
+    
+    #    - for each subsequent window, append only its last frame
+    if len(X_windows) > 1:
+        tails = [w[0, -1, :] for w in X_windows[1:]]  # list of (46,)
+        tails = tf.stack(tails, axis=0)               # (num_windows-1, 46)
+        sequence = tf.concat([sequence, tails], axis=0)  # (frames_so_far, 46)
+    
+    # 5) now append the very last frame from y of the last row
+    last_y = y_labels[-1]                # (1, 46)
+    last_y = tf.expand_dims(last_y[0], axis=0)  # (1, 46)
+    last_y = tf.expand_dims(last_y, axis=1)     # (1, 1, 46)
+    
+    # 6) re‐batch and concat on time axis
+    full_seq = tf.expand_dims(sequence, axis=0)  # (1, frames_extracted, 46)
+    full_seq = tf.concat([full_seq, last_y], axis=1)  # now (1, total_frames, 46)
+    
+    return full_seq
+
+
+def extract_subset_from_dataloader(ds, k, split_id_filter=None, gameId=None, playId=None, frameId=None):
+    """
+    Extract up to `k` examples from the dataset `ds` that match the given filters,
+    supporting batch sizes > 1.
+
+    Args:
+        ds (tf.data.Dataset): The dataloader yielding (ids, X, y) tuples.
+        split_id_filter (int): 0 for train, 1 for val, 2 for test.
+        k (int): Number of items to retrieve (or all if less than k available).
+        gameId (int, optional): Filter by gameId (ids[0]).
+        playId (int, optional): Filter by playId (ids[1]).
+        frameId (int, optional): Filter by frameId (ids[3]).
+
+    Returns:
+        List of tuples: [(ids, X, y), ...] with up to `k` items matching the filters.
+    """
+    result = []
+    for batch in ds:
+        ids_batch, X_batch, y_batch = batch  # shapes: (B, 4), (B, 100, 46), (B, 46)
+        for i in range(ids_batch.shape[0]):
+            ids = ids_batch[i]
+            if split_id_filter is not None and ids[2].numpy() != split_id_filter:
+                continue
+            if gameId is not None and ids[0].numpy() != gameId:
+                continue
+            if playId is not None and ids[1].numpy() != playId:
+                continue
+            if frameId is not None and ids[3].numpy() != frameId:
+                continue
+            result.append((
+                tf.expand_dims(ids, axis=0),             # shape (1, 4)
+                tf.expand_dims(X_batch[i], axis=0),      # shape (1, 100, 46)
+                tf.expand_dims(y_batch[i], axis=0),      # shape (1, 46)
+            ))
+            if len(result) == k:
+                return result
+    return result
+
+
+def covert_sequences_to_df(sequences):
+    """
+    Convert a list of sequences to a DataFrame.
+    Each sequence is a tuple (ids, X, y) where ids is a tensor of shape (1, 4),
+    X is a tensor of shape (1, 100, 46), and y is a tensor of shape (1, 46).
+    The DataFrame will have columns: gameId, playId, split_id, frameId, X, y.
+    """
+    # Convert to pandas DataFrame
+    df = pd.DataFrame(sequences, columns=["ids", "X", "y"])
+
+    # Create columns for gameId, playId, and frameId
+    df["gameId"] = df["ids"].apply(lambda x: x[0].numpy()[0])
+    df["playId"] = df["ids"].apply(lambda x: x[0].numpy()[1])
+    df["frameId"] = df["ids"].apply(lambda x: x[0].numpy()[3])
+
+    # Drop IDs column
+    df = df.drop(columns=["ids"])
+
+    return df
