@@ -82,7 +82,7 @@ def extract_player_trajectory(sequence, team, player_index=None):
     return tf.stack([x_traj, y_traj], axis=1)   # shape (T,2)
 
 
-def descale_trajectory(coords, x_max=120.0, y_max=53.3):
+def descale_trajectory(coords, x_max=120.0, y_max=120.0): #change to 120.0 after reloading data
     """
     Reverse min-max scaling of coordinates on the pitch.
     """

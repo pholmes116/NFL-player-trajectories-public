@@ -153,7 +153,7 @@ tracking = (
 # --- Normalize x and y based on domain knowledge (field size) ---
 tracking = tracking.with_columns([
     (pl.col("x") / 120.0).alias("x"),
-    (pl.col("y") / 53.3).alias("y"),
+    (pl.col("y") / 120.0).alias("y"),
 ])
 
 # --- Min-max scale s and a ---
@@ -171,7 +171,7 @@ scaling_info = {
           "method": "normalize"
     },
     "y": {"min": 0.0, 
-          "max": 53.3, 
+          "max": 120.0, 
           "method": "normalize"
     },
     "s": {
@@ -217,12 +217,21 @@ with open(SAVE_FOLDER + "scaling_stats.json", "w") as f:
 # ---------------------------------------------------------------------------
 
 event_df = (
-    tracking.select(["gameId", "playId", "frameId", "event"])
+    tracking
+    .select(["gameId", "playId", "frameId", "event"])
+    # fill nulls with the “Nothing” label
     .with_columns(pl.col("event").fill_null("Nothing"))
-    .to_dummies(columns=["event"], drop_first=True)
+    # generate a dummy for every event (including “Nothing”)
+    .to_dummies(
+        columns=["event"],
+        prefix="event",
+        prefix_sep="_",
+        drop_first=False,      # keep all dummies
+    )
+    # drop the “event_Nothing” column so that Nothing becomes the implicit/base level
+    .drop("event_Nothing")
     .unique()
 )
-tracking = tracking.drop("event")
 
 # ---------------------------------------------------------------------------
 # 4. Flatten 23‑entity frames
