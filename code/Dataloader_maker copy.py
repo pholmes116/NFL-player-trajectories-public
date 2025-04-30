@@ -30,6 +30,7 @@ import tensorflow as tf
 # Feature / sequence constants
 # ════════════════════════════════════════════════════════════════════════════════
 NUM_ENTITIES: int = 23
+COORDS_ALL: list[str] = ["s", "a", "dis", "o_sin", "o_cos", "dir_sin", "dir_cos"]
 COORDS: list[str] = ["x", "y"]
 NUM_FEATS: int = NUM_ENTITIES * len(COORDS)          # 46
 META_LEN: int = 4                                    # gameId, playId, split, firstFrameId, 
@@ -40,12 +41,66 @@ POSITIONAL_FEATURES = [f"{c}_{i}"
                   for i in range(1, NUM_ENTITIES + 1)
                   for c in COORDS]
 
-INPUT_FEATURES = POSITIONAL_FEATURES.copy()  # Change as needeed
-TARGET_FEATURES = POSITIONAL_FEATURES.copy()  # Change as needeed
+EXTRA_POSITIONAL_FEATURES = [f"{c}_{i}"
+                  for i in range(1, NUM_ENTITIES)
+                  for c in COORDS_ALL]
+
+INPUT_FEATURES = POSITIONAL_FEATURES + EXTRA_POSITIONAL_FEATURES + ['event_ball_snap',
+                                                                    'event_dropped_pass',
+                                                                    'event_first_contact',
+                                                                    'event_fumble',
+                                                                    'event_fumble_defense_recovered',
+                                                                    'event_fumble_offense_recovered',
+                                                                    'event_handoff',
+                                                                    'event_huddle_break_offense',
+                                                                    'event_huddle_start_offense',
+                                                                    'event_lateral',
+                                                                    'event_line_set',
+                                                                    'event_man_in_motion',
+                                                                    'event_out_of_bounds',
+                                                                    'event_pass_arrived',
+                                                                    'event_pass_forward',
+                                                                    'event_pass_outcome_caught',
+                                                                    'event_pass_outcome_incomplete',
+                                                                    'event_pass_outcome_interception',
+                                                                    'event_pass_outcome_touchdown',
+                                                                    'event_pass_shovel',
+                                                                    'event_pass_tipped',
+                                                                    'event_play_action',
+                                                                    'event_play_submit',
+                                                                    'event_qb_kneel',
+                                                                    'event_qb_sack',
+                                                                    'event_qb_slide',
+                                                                    'event_qb_spike',
+                                                                    'event_qb_strip_sack',
+                                                                    'event_run',
+                                                                    'event_run_pass_option',
+                                                                    'event_safety',
+                                                                    'event_shift',
+                                                                    'event_snap_direct',
+                                                                    'event_tackle',
+                                                                    'event_timeout_away',
+                                                                    'event_touchback',
+                                                                    'event_touchdown',
+                                                                    'quarter_1',
+                                                                    'quarter_2',
+                                                                    'quarter_4',
+                                                                    'quarter_5',
+                                                                    'down_2',
+                                                                    'down_3',
+                                                                    'down_4',
+                                                                    'yardsToGo',
+                                                                    'possessionTeam',
+                                                                    'gameClock',
+                                                                    'preSnapHomeScore',
+                                                                    'preSnapVisitorScore',
+                                                                    'yardsToScore']
+
+TARGET_FEATURES = POSITIONAL_FEATURES.copy()
 
 DATA_FOLDER = "processed_data/"
 INPUT_DATA_NAME = "model_input_2.parquet"
-OUTPUT_DATA_NAME = "transformer_dataset"
+OUTPUT_DATA_NAME = "transformer_dataset_2_complete"
 
 # Lookup Table for train test val split
 SPLIT_PATH = DATA_FOLDER + "train_test_val.parquet"

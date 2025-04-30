@@ -224,8 +224,6 @@ event_df = (
     # generate a dummy for every event (including “Nothing”)
     .to_dummies(
         columns=["event"],
-        prefix="event",
-        prefix_sep="_",
         drop_first=False,      # keep all dummies
     )
     # drop the “event_Nothing” column so that Nothing becomes the implicit/base level
