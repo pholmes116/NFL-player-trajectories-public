@@ -1,7 +1,7 @@
-```
+```markdown
 
 ### 📘 README.md
-
+```
 ```markdown
 # Shallow Learning Projects – NFL Big Data Bowl 2025
 
