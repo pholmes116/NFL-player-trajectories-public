@@ -69,3 +69,5 @@ This project aims to predict player trajectories using data from the 2025 Big Da
 - `ST456-project-marking.pdf`: Marking criteria
 - `environment_instructions.md`: Setup guide
 - `.gitignore`: Git configuration
+- `Full-Field Trajectory Prediction in the NFL Using LSTM and
+Transformer Models.PDF` Final Submission Paper
