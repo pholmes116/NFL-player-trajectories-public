@@ -23,23 +23,7 @@ This project aims to predict player trajectories using data from the 2025 Big Da
 
 ```
 
-.
-├── code/
-│   ├── Dataloader\_maker.py
-│   ├── Polars\_pipeline.py
-│   ├── custom\_visualizer.py
-│   ├── download\_nfl\_bigdatabowl2025\_data.py
-│   ├── explore\_dataset.ipynb
-│   ├── Models/
-│   │   ├── Base\_transformer.py
-│   │   ├── Base\_transformer.ipynb
-│   │   └── Base\_transformer\_trainer.py
-│   └── ...
-├── environment\_instructions.md
-├── nfl\_env.yml
-├── PROPOSAL.md
-├── ST456-project-marking.pdf
-└── README.md
+<pre> ``` . ├── code/ │ ├── Dataloader_maker.py │ ├── Polars_pipeline.py │ ├── custom_visualizer.py │ ├── download_nfl_bigdatabowl2025_data.py │ ├── explore_dataset.ipynb │ ├── Models/ │ │ ├── Base_transformer.py │ │ ├── Base_transformer.ipynb │ │ └── Base_transformer_trainer.py │ └── ... ├── environment_instructions.md ├── nfl_env.yml ├── PROPOSAL.md ├── ST456-project-marking.pdf └── README.md ``` </pre>
 
 ````
 
