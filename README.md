@@ -1,75 +1,86 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/ESIxkXJy)
-# ST456 course project (WT 2025)
+### 📘 README.md
 
-## Project task
+```markdown
+# Shallow Learning Projects – NFL Big Data Bowl 2025
 
-You are free to propose a task for your project. Your proposal must be approved by the course lecturer. Your proposal may either be immediately approved or you may be asked to revise and resubmit your proposal.
+This repository contains tools, code examples, and documentation for developing shallow learning models, with a specific focus on the NFL Big Data Bowl 2025 dataset.
 
-Your project should demonstrate that you have acquired a good knowledge of some of the deep learning topics covered in the course, including neural network architecture design, implementation, training, evaluation and interpretation.
+## 🏈 Overview
 
-Your implementation must be in TensorFlow, using a dataset suitable for your problem.
+This project aims to predict player trajectory using data from the 2025 Big Data Bowl competition:
+- Data loading utilities
+- Visualization tools
+- Baseline model implementations
+- Notebooks for exploration and experimentation
+- Instructions for environment setup
 
-## Group work
+## 📁 Project Structure
 
-Your project is a group project, with each group consisting of three or four students.  
+```
 
-You are given freedom to form groups as you like. We will provide some means to facilitate group formation.  
+.
+├── code/
+│   ├── Dataloader\_maker.py
+│   ├── Polars\_pipeline.py
+│   ├── custom\_visualizer.py
+│   ├── download\_nfl\_bigdatabowl2025\_data.py
+│   ├── explore\_dataset.ipynb
+│   ├── Models/
+│   │   ├── Base\_transformer.py
+│   │   ├── Base\_transformer.ipynb
+│   │   └── Base\_transformer\_trainer.py
+│   └── ...
+├── environment\_instructions.md
+├── nfl\_env.yml
+├── PROPOSAL.md
+├── ST456-project-marking.pdf
+└── README.md
 
-You are expected to split the work on your project among yourself. It is expected from each group member to contribute a fair share of technical contributions to the project.
+````
 
-## GitHub
+## ⚙️ Setup Instructions
 
-You will be assigned a private repository for your project in the ST456 organization.
+1. **Install Conda Environment**  
+   Create the environment using the provided YAML file:
 
-Your entire **source code and report** must be included in this repository. Depending on the **size of your dataset(s)**, you can provide only the links to the external data sources.
+   ```bash
+   conda env create -f nfl_env.yml
+   conda activate nfl2025
+````
 
-## Report
+2. **Download Dataset**
+   Run the following script to download the Big Data Bowl 2025 dataset:
 
-### Format of the report
+   ```bash
+   python code/download_nfl_bigdatabowl2025_data.py
+   ```
 
-Your report should be formatted according to the [ICML latex style files](https://media.icml.cc/Conferences/ICML2022/Styles/icml2022.zip).
+3. **Explore the Dataset**
+   Use the Jupyter notebooks in the `code/` directory to start exploring the data:
 
-Your report should be no longer than **eight** (8) pages, not including references, plus unlimited space for references. Your report may contain appendix containing further details of your work.
+   * `explore_dataset.ipynb`
+   * `test_custom_visualizer.ipynb`
 
-### Organization of the report
+4. **Run the Polars Pipeline**
+   Use the scripts in the `code/` directory to start exploring the data:
 
-The layout of the sections of your report should follow standard structure of a research paper. Here is an example of a research paper organization:
+   * `Polars_pipelien.py`
+   * `Dataloader_maker.py`
+   
 
-* **Abstract** The abstract should contain a short summary of your report, covering your chosen task, what is your solution, and what are your main results.
+## 🧠 Models
 
-* **Introduction** The introduction should give a clear description of your chosen task, why your task is important, what is your solution, why is your solution an appropriate solution for the given problem, and a summary of main results.  
+LSTM and 
+  * See `code/Models/LSTM1.ipynb` for the one step implementation.
+  * See `code/Models/LSTM40.ipynb` for the fourty step implementation.
+Transformer Models:
+  * See `code/Models/Base_transformer.ipynb` for the base implementation.
+  * See `code/Models/Big_transformer.ipynb` for the big implementation.
+  * See `code/Models/Base_transformer_physics.ipynb` to see some loss functions we ran out of time to implement.
 
-* **Related work** This section should overview related work for the task that you try to solve and position your work against related work. Related work would typically be published in research papers.
+## 📄 Additional Files
 
-* **The architecture** This section should describe neural network architectures and the underlying methodology used in your work.
-
-* **Training methods** This section should describe methods for training neural networks used in your experiments, covering optimizers used, setting of optimizer parameters such as the learning rate and other, as well as any methods used to mitigate model overfitting.  
-
-* **Numerical results** This section should present your numerical evaluation results along with discussion of results. First, the goals of the numerical evaluations should be clearly described. Second, datasets used in the evaluation should be described. Third, evaluation metrics should be defined (e.g. loss function or accuracy metric used). Fourth, any baseline methods used for comparison should be briefly described. Fifth, and last, numerical results should be presented along with discussion.
-
-* **Interpretation** Reflect on the architecture and performance of your model. Perform some sanity checks on the model using explainable AI tools.
-
-* **Conclusion** The conclusion section should summarize the content of the report, followed by a discussion of potential future work to address any limitations of the study or to explore new research avenues.
-
-* **Bibliography** The bibliography lists references cited in the paper (it is automatically generated by latex). Your report must cite any references that you used in your research, and give a proper credit for any concepts or results introduced in previously published work.
-
-At the end of the report, your report must have a section with the title **Statement about individual contributions**, in which you need to summarize individual technical contributions of group members.
-
-### Writing tips
-
-Here are some resources on writing research papers that you may find useful for this course but also more generally:
-
-* Jean-Yves Le Boudec, [How to Write a Paper](https://leboudec.github.io/leboudec/resources/paper.html), accessed 2023
-* John N. Tsitsiklis, [A Few Tips on Writing Papers with Mathematical Content](http://web.mit.edu/jnt/www/Papers/R-20-write-v5.pdf), last update 2020, accessed 2023
-* Jon Turner, [How to Write a Great Research Paper](https://www.arl.wustl.edu/~pcrowley/cse/591/writingResearchPapers.pdf), accessed 2023
-
-### Important dates
-
-* Week 8
-   * A Q\&A session at the end of lecture 8
-* Week 9
-  * Groups are formed  
-* Week 10
-   * Each group submits a project proposal in PROPOSAL.md of their project GitHub repository by Wednesday end of the day.
-* Week 11
-   * All project proposals discussed and approved  
+* `PROPOSAL.md`: Project proposal template
+* `ST456-project-marking.pdf`: Marking criteria (likely for coursework)
+* `environment_instructions.md`: Step-by-step setup guide
+* `.gitignore`: Git configuration
