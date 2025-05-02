@@ -1,7 +1,9 @@
-```markdown
+Here’s a cleaned-up and corrected version of your README file. I fixed grammar issues, markdown formatting, consistency, and clarified some sections for readability.
+
+---
 
 ### 📘 README.md
-```
+
 ```markdown
 # Shallow Learning Projects – NFL Big Data Bowl 2025
 
@@ -9,12 +11,13 @@ This repository contains tools, code examples, and documentation for developing 
 
 ## 🏈 Overview
 
-This project aims to predict player trajectory using data from the 2025 Big Data Bowl competition:
-- Data loading utilities
-- Visualization tools
-- Baseline model implementations
-- Notebooks for exploration and experimentation
-- Instructions for environment setup
+This project aims to predict player trajectories using data from the 2025 Big Data Bowl competition. It includes:
+
+- Data loading utilities  
+- Visualization tools  
+- Baseline model implementations  
+- Notebooks for exploration and experimentation  
+- Instructions for environment setup  
 
 ## 📁 Project Structure
 
@@ -50,7 +53,7 @@ This project aims to predict player trajectory using data from the 2025 Big Data
    conda activate nfl2025
 ````
 
-2. **Download Dataset**
+2. **Download the Dataset**
    Run the following script to download the Big Data Bowl 2025 dataset:
 
    ```bash
@@ -58,32 +61,40 @@ This project aims to predict player trajectory using data from the 2025 Big Data
    ```
 
 3. **Explore the Dataset**
-   Use the Jupyter notebooks in the `code/` directory to start exploring the data:
+   Use the Jupyter notebooks in the `code/` directory to begin exploration:
 
    * `explore_dataset.ipynb`
    * `test_custom_visualizer.ipynb`
 
 4. **Run the Polars Pipeline**
-   Use the scripts in the `code/` directory to start exploring the data:
+   These scripts help process and load data:
 
-   * `Polars_pipelien.py`
+   * `Polars_pipeline.py`
    * `Dataloader_maker.py`
-   
 
 ## 🧠 Models
 
-LSTM and 
-  * See `code/Models/LSTM1.ipynb` for the one step implementation.
-  * See `code/Models/LSTM40.ipynb` for the fourty step implementation.
-Transformer Models:
-  * See `code/Models/Base_transformer.ipynb` for the base implementation.
-  * See `code/Models/Big_transformer.ipynb` for the big implementation.
-  * See `code/Models/Base_transformer_physics.ipynb` to see some loss functions we ran out of time to implement.
+### LSTM Models
+
+* One-step prediction: `code/Models/LSTM1.ipynb`
+* Forty-step prediction: `code/Models/LSTM40.ipynb`
+
+### Transformer Models
+
+* Base implementation: `code/Models/Base_transformer.ipynb`
+* Larger architecture: `code/Models/Big_transformer.ipynb`
+* Physics-informed loss functions (partial): `code/Models/Base_transformer_physics.ipynb`
 
 ## 📄 Additional Files
 
-* `PROPOSAL.md`: Project proposal template
-* `ST456-project-marking.pdf`: Marking criteria (likely for coursework)
+* `PROPOSAL.md`: Project proposal
+* `ST456-project-marking.pdf`: Course marking criteria
 * `environment_instructions.md`: Step-by-step setup guide
 * `.gitignore`: Git configuration
+
+```
+
+---
+
+Would you like help turning this into a GitHub-friendly format with badges and links as well?
 ```
