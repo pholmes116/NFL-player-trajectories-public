@@ -63,23 +63,41 @@ def _drop_meta(meta, x, y):
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    # data & IO
+    # ------------------------------------------------------------------
+    # Data & IO
+    # ------------------------------------------------------------------
     p.add_argument("--data", type=Path, default=Path("processed_data/transformer_dataset_9"),
-                   help="Path to tf.data dataset (directory passed to tf.data.Dataset.save)")
+                   help="Directory created by tf.data.Dataset.save()")
     p.add_argument("--weights_dir", type=Path, default=Path("weights"),
-                   help="Where to save epoch checkpoints, plots & final weights")
+                   help="Folder for checkpoints, plots & final weights")
 
-    # training hyper-params
-    p.add_argument("--batch", type=int, default=128, help="Batch size")
-    p.add_argument("--epochs", type=int, default=10_000, help="Upper bound for epochs (early-stop decides real count)")
-    p.add_argument("--steps", type=int, default=1, help="Steps per epoch")
-    p.add_argument("--val_steps", type=int, default=100, help="Validation steps per epoch")
-    p.add_argument("--lr", type=float, default=1e-4, help="Initial learning rate")
-    p.add_argument("--patience", type=int, default=5, help="Early-stopping patience (epochs)")
+    # ------------------------------------------------------------------
+    # Training hyper‑parameters
+    # ------------------------------------------------------------------
+    p.add_argument("--batch", type=int, default=128)
+    p.add_argument("--epochs", type=int, default=10_000)
+    p.add_argument("--steps", type=int, default=1_000)
+    p.add_argument("--val_steps", type=int, default=100)
+    p.add_argument("--lr", type=float, default=1e-4)
+    p.add_argument("--patience", type=int, default=5)
 
-    # misc
-    p.add_argument("--mixed_precision", action="store_true", help="Enable bf16/fp16 mixed precision if a GPU is present")
-    p.add_argument("--plot", action="store_true", help="Plot and save loss curves after training completes")
+    # ------------------------------------------------------------------
+    # **Model hyper‑parameters** (new)
+    # ------------------------------------------------------------------
+    p.add_argument("--num_feats", type=int, default=NUM_FEATS, help="Number of coordinate features (x,y pairs)")
+    p.add_argument("--max_len", type=int, default=MAX_LEN, help="Sequence length window")
+    p.add_argument("--d_model", type=int, default=D_MODEL, help="Transformer hidden size")
+    p.add_argument("--n_heads", type=int, default=N_HEADS, help="Multi‑head attention heads")
+    p.add_argument("--n_layers", type=int, default=N_LAYERS, help="Encoder layers")
+    p.add_argument("--d_ff", type=int, default=D_FF, help="Feed‑forward inner dimension")
+    p.add_argument("--dropout", type=float, default=DROPOUT, help="Dropout rate")
+
+    # ------------------------------------------------------------------
+    # Misc
+    # ------------------------------------------------------------------
+    p.add_argument("--mixed_precision", type= str, default= "mixed_float16" )
+    p.add_argument("--plot", action="store_true")
+    p.add_argument("--evaluate", action="store_true")
 
     return p.parse_args()
 
@@ -90,6 +108,25 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+
+    # ------------------------------------------------------------------
+    # Update globals so they propagate to any import‑time constants
+    # ------------------------------------------------------------------
+    """global NUM_FEATS, MAX_LEN, D_MODEL, N_HEADS, N_LAYERS, D_FF, DROPOUT
+    NUM_FEATS, MAX_LEN, D_MODEL, N_HEADS, N_LAYERS, D_FF, DROPOUT = (
+        args.num_feats, args.max_len, args.d_model, args.n_heads,
+        args.n_layers, args.d_ff, args.dropout,
+    )"""
+
+    cfg = dict(
+        num_feats = args.num_feats,
+        max_len   = args.max_len,
+        d_model   = args.d_model,
+        n_heads   = args.n_heads,       
+        n_layers  = args.n_layers,      
+        d_ff      = args.d_ff,     
+        dropout   = args.dropout,    
+    )
 
     # ------------------------------------------------------------------
     # Hardware & precision policy
@@ -124,13 +161,15 @@ def main() -> None:
     test_ds = (raw_ds
                .filter(_filter_split(SPLIT_TEST))
                .map(_drop_meta, num_parallel_calls=tf.data.AUTOTUNE)
+               .shuffle(4096)
                .batch(args.batch)
                .prefetch(tf.data.AUTOTUNE))
 
     # ------------------------------------------------------------------
     # Build / compile model
     # ------------------------------------------------------------------
-    predictor = TransformerPredictor(dtype_policy="mixed_float16" if args.mixed_precision else None)
+    predictor = TransformerPredictor(dtype_policy = args.mixed_precision,
+                                     **cfg)
     model = predictor.model
 
     model.compile(
@@ -172,44 +211,37 @@ def main() -> None:
         verbose=1,
     )
 
-    # ------------------------------------------------------------------
-    # Evaluation on the held-out test split
-    # ------------------------------------------------------------------
-    test_loss, test_mae = model.evaluate(test_ds, verbose=1)
-    print(f"\n✅  Test MSE: {test_loss:.5f}   |   Test MAE: {test_mae:.5f}")
+    # ----------------------- evaluate -------------------------------------
+    if args.evaluate:
+        test_loss, test_mae = model.evaluate(test_ds, verbose=1)
+        print(f"\n✅  Test MSE: {test_loss:.5f}   |   Test MAE: {test_mae:.5f}")
 
-    # ------------------------------------------------------------------
-    # Save best weights & history
-    # ------------------------------------------------------------------
     final_weights = args.weights_dir / "best.weights.h5"
     model.save_weights(final_weights.as_posix())
-    print(f"\n💾  Best weights saved to: {final_weights.relative_to(Path.cwd())}")
 
-    history_path = args.weights_dir / "history.json"
-    history_path.write_text(json.dumps(history.history))
+    # safe relative‑path display ------------------------------------------------
+    try:
+        rel = final_weights.relative_to(Path.cwd())
+    except ValueError:
+        rel = final_weights
+    print(f"💾  Best weights saved to: {rel}")
 
-    # ------------------------------------------------------------------
-    # Optional: plot loss curves
-    # ------------------------------------------------------------------
+    (args.weights_dir / "history.json").write_text(json.dumps(history.history))
+
     if args.plot:
         try:
-            import matplotlib.pyplot as plt  # noqa: WPS433 (runtime import ok)
-
+            import matplotlib.pyplot as plt
             plt.figure(figsize=(6, 4))
             plt.plot(history.history["loss"], label="train")
             plt.plot(history.history.get("val_loss", []), label="val")
-            plt.xlabel("Epoch")
-            plt.ylabel("MSE loss")
-            plt.title("Training & Validation Loss")
-            plt.legend()
-            plt.tight_layout()
-
+            plt.xlabel("Epoch"); plt.ylabel("MSE loss"); plt.legend(); plt.tight_layout()
             fig_path = args.weights_dir / "loss_curve.png"
             plt.savefig(fig_path, dpi=120)
-            print(f"📈  Loss curve saved to: {fig_path.relative_to(Path.cwd())}")
+            print("📈  Loss curve saved to", fig_path)
         except ImportError:
-            print("matplotlib is not installed – skipping loss plot. Install it or rerun with --plot.")
+            print("matplotlib missing – skip plot")
 
 
 if __name__ == "__main__":
     main()
+

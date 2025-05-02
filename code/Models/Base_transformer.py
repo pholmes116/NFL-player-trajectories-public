@@ -1,4 +1,4 @@
-# transformer_model.py
+# Base_transformer.py
 """Transformer encoder-only model for sequence-to-one frame prediction
 with autoregressive helpers.
 
@@ -114,22 +114,34 @@ def _build_core_model(
 # Wrapper class with convenience helpers
 # -----------------------------------------------------------------------------
 class TransformerPredictor:
-    """High‑level wrapper providing single‑step and autoregressive inference.
-
-    >>> model = TransformerPredictor()
-    >>> y = model.predict(seq, n_steps=5)   # autoregressive rollout
-    """
-
     def __init__(
         self,
+        *,
+        num_feats: int = NUM_FEATS,
+        max_len: int = MAX_LEN,
+        d_model: int = D_MODEL,
+        n_heads: int = N_HEADS,
+        n_layers: int = N_LAYERS,
+        d_ff: int = D_FF,
+        dropout: float = DROPOUT,
         weights: Union[str, Path, None] = None,
         dtype_policy: str | None = None,
     ) -> None:
         if dtype_policy is not None:
             tf.keras.mixed_precision.set_global_policy(dtype_policy)
-        self.model: keras.Model = _build_core_model()
+
+        self.model = _build_core_model(
+            num_feats=num_feats,
+            max_len=max_len,
+            d_model=d_model,
+            n_heads=n_heads,
+            n_layers=n_layers,
+            d_ff=d_ff,
+            dropout=dropout,
+        )
         if weights:
             self.load_weights(weights)
+
 
     # ------------------------------------------------------------------
     # Public API
