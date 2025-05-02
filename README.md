@@ -1,5 +1,3 @@
-Here’s a cleaned-up and corrected version of your README file. I fixed grammar issues, markdown formatting, consistency, and clarified some sections for readability.
-
 ---
 
 ### 📘 README.md
@@ -22,10 +20,24 @@ This project aims to predict player trajectories using data from the 2025 Big Da
 ## 📁 Project Structure
 
 ```
-
-<pre> ``` . ├── code/ │ ├── Dataloader_maker.py │ ├── Polars_pipeline.py │ ├── custom_visualizer.py │ ├── download_nfl_bigdatabowl2025_data.py │ ├── explore_dataset.ipynb │ ├── Models/ │ │ ├── Base_transformer.py │ │ ├── Base_transformer.ipynb │ │ └── Base_transformer_trainer.py │ └── ... ├── environment_instructions.md ├── nfl_env.yml ├── PROPOSAL.md ├── ST456-project-marking.pdf └── README.md ``` </pre>
-
-````
+.\
+├── code/\
+│   ├── Dataloader_maker.py\
+│   ├── Polars_pipeline.py\
+│   ├── custom_visualizer.py\
+│   ├── download_nfl_bigdatabowl2025_data.py\
+│   ├── explore_dataset.ipynb\
+│   ├── Models/\
+│   │   ├── Base_transformer.py\
+│   │   ├── Base_transformer.ipynb\
+│   │   └── Base_transformer_trainer.py\
+│   └── ...\
+├── environment_instructions.md\
+├── nfl_env.yml\
+├── PROPOSAL.md\
+├── ST456-project-marking.pdf\
+└── README.md\
+```
 
 ## ⚙️ Setup Instructions
 
@@ -35,7 +47,7 @@ This project aims to predict player trajectories using data from the 2025 Big Da
    ```bash
    conda env create -f nfl_env.yml
    conda activate nfl2025
-````
+   ```
 
 2. **Download the Dataset**
    Run the following script to download the Big Data Bowl 2025 dataset:
@@ -51,7 +63,7 @@ This project aims to predict player trajectories using data from the 2025 Big Da
    * `test_custom_visualizer.ipynb`
 
 4. **Run the Polars Pipeline**
-   These scripts help process and load data:
+   Use the following scripts to preprocess and load data:
 
    * `Polars_pipeline.py`
    * `Dataloader_maker.py`
@@ -72,13 +84,12 @@ This project aims to predict player trajectories using data from the 2025 Big Da
 ## 📄 Additional Files
 
 * `PROPOSAL.md`: Project proposal
-* `ST456-project-marking.pdf`: Course marking criteria
+* `ST456-project-marking.pdf`: Marking criteria (for coursework)
 * `environment_instructions.md`: Step-by-step setup guide
 * `.gitignore`: Git configuration
 
-```
-
 ---
 
-Would you like help turning this into a GitHub-friendly format with badges and links as well?
+[![Python 3.9](https://img.shields.io/badge/python-3.9-blue.svg)](https://www.python.org/downloads/)
+
 ```
