@@ -44,8 +44,9 @@ INPUT_FEATURES = POSITIONAL_FEATURES.copy()  # Change as needeed
 TARGET_FEATURES = POSITIONAL_FEATURES.copy()  # Change as needeed
 
 DATA_FOLDER = "processed_data/"
-INPUT_DATA_NAME = "model_input_2.parquet"
-OUTPUT_DATA_NAME = "transformer_dataset"
+N_TRACKING_FILES = 1
+INPUT_DATA_NAME = f"model_input_{N_TRACKING_FILES}.parquet"
+OUTPUT_DATA_NAME = f"transformer_dataset_{N_TRACKING_FILES}"
 
 # Lookup Table for train test val split
 SPLIT_PATH = DATA_FOLDER + "train_test_val.parquet"
@@ -135,6 +136,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--save-dir", type=str, default= DATA_FOLDER + OUTPUT_DATA_NAME, help="Output directory")
     p.add_argument("--max-len", type=int, default=MAX_SEQ_LEN, help="Pad/truncation length (frames)")
     p.add_argument("--n-plays", type=int, default=None, help="Sample first N plays (omit ⇒ all plays)")
+    p.add_argument("--num-parallel-calls", type=int, default=tf.data.AUTOTUNE, help="How many plays to process in parallel"
+)
     return p.parse_args()
 
 
@@ -174,6 +177,7 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
 
     tf.get_logger().setLevel("ERROR")
+    ds = ds.prefetch(tf.data.AUTOTUNE)
     ds.save(out_dir.as_posix())
     print(f"✅ Finished — dataset written to ‘{out_dir}/’ in TFRecord shards.")
 

@@ -21,8 +21,9 @@ import json
 
 FOLDER = "raw_data/"
 SAVE_FOLDER = "processed_data/"
-FILE_NAME = "model_input_2.parquet"
-N_TRACKING_FILES = 2
+N_TRACKING_FILES = 9
+FILE_NAME = f"model_input_{N_TRACKING_FILES}.parquet"
+
 
 TRACKING_FILES = [FOLDER + f"tracking_week_{i}.csv" for i in range(1, N_TRACKING_FILES + 1)]
 
@@ -100,6 +101,7 @@ players = players.with_columns([
     _standard_scale(pl.col("weightMetric"), stats["wm_mean"][0], stats["wm_std"][0]).alias("weightMetric"),
 ])
 
+print ('Players table loaded')
 # ---------------------------------------------------------------------------
 # 2. Plays table (+ yardsToScore) – unchanged
 # ---------------------------------------------------------------------------
@@ -125,6 +127,7 @@ plays = (
     .drop(["defensiveTeam", "yardlineSide", "yardlineNumber", "absoluteYardlineNumber"])
 )
 
+print ('Plays table loaded')
 # ---------------------------------------------------------------------------
 # 3. Tracking data (weeks 1–9)
 # ---------------------------------------------------------------------------
@@ -212,6 +215,7 @@ scaling_info = {
 with open(SAVE_FOLDER + "scaling_stats.json", "w") as f:
     json.dump(scaling_info, f, indent=2)
 
+print ('Tracking data loaded')
 # ---------------------------------------------------------------------------
 # 3a. One‑hot encode `event`
 # ---------------------------------------------------------------------------
@@ -230,7 +234,7 @@ event_df = (
     .drop("event_Nothing")
     .unique()
 )
-
+print ('Event data loaded')
 # ---------------------------------------------------------------------------
 # 4. Flatten 23‑entity frames
 # ---------------------------------------------------------------------------
@@ -288,6 +292,7 @@ for m in VALUE_COLS:
         how="left",
     )
 
+print ('Data flattened')
 # ---------------------------------------------------------------------------
 # 5. Merge context tables and write
 # ---------------------------------------------------------------------------
@@ -304,6 +309,6 @@ model_input = (
     .sort(["gameId", "playId", "frameId"])
 )
 
-
+print('Saving...')
 model_input.write_parquet(SAVE_FOLDER + FILE_NAME)
 print(f"Pipeline finished — wrote model_input.parquet ({len(model_input)} rows across {N_TRACKING_FILES} weeks)")
