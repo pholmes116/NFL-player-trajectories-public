@@ -2,6 +2,7 @@ import os
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 import matplotlib.pyplot as plt
+from matplotlib import colors as mcolors
 import tensorflow as tf
 import numpy as np
 from matplotlib.lines import Line2D
@@ -96,7 +97,8 @@ def descale_trajectory(coords, x_max=120.0, y_max=120.0): #change to 120.0 after
 def plot_player_trajectory(traj_coords, ax=None,
                            traj_color=None, traj_label=None,
                            linestyle='-', show_markers=True,
-                           marker_size=50,            # ← new
+                           marker_size=50,
+                           zorder=1,           # ← new
                            **pitch_kwargs):
     """
     Plots a single trajectory given its (T,2) coordinates on the pitch.
@@ -118,17 +120,27 @@ def plot_player_trajectory(traj_coords, ax=None,
     coords = coords[mask]
 
     # Plot trajectory line
-    ax.plot(coords[:, 0], coords[:, 1], linestyle=linestyle, color=traj_color, label=traj_label or 'trajectory')
+    ax.plot(coords[:,0], coords[:,1],
+            linestyle=linestyle,
+            color=traj_color,
+            label=traj_label or 'trajectory',
+            zorder=zorder)                # ← pass in
+
     # Plot start marker
-    if show_markers and coords.shape[0] > 0:
-        ax.scatter(coords[0, 0], coords[0, 1],
-                   marker='o', color=traj_color,
-                   s=marker_size)
+    if show_markers and coords.shape[0]>0:
+        ax.scatter(coords[0,0], coords[0,1],
+                   marker='o',
+                   color=traj_color,
+                   s=marker_size,
+                   zorder=zorder+0.1)         # ← slightly above line
+
     # Plot end marker
-    if show_markers and coords.shape[0] > 1:
-        ax.scatter(coords[-1, 0], coords[-1, 1],
-                   marker='x', color=traj_color,
-                   s=marker_size)
+    if show_markers and coords.shape[0]>1:
+        ax.scatter(coords[-1,0], coords[-1,1],
+                   marker='x',
+                   color=traj_color,
+                   s=marker_size,
+                   zorder=zorder+0.1)         # ← ditto
 
     ax.legend()
     return (fig, ax) if 'fig' in locals() else axs
@@ -138,7 +150,12 @@ def plot_trajectories(sequence,
                       offense=None, defense=None, include_ball=False,
                       ground_truth_seq=None, pred_seq=None,
                       gt_linestyle='-.', pred_linestyle='--',
-                      gt_color='lightgreen', pred_color='darkgreen',
+                      gt_offense_color=None,
+                      gt_defense_color=None,
+                      gt_ball_color=None,
+                      pred_offense_color=None,
+                      pred_defense_color=None,
+                      pred_ball_color=None,
                       ax=None,
                       offense_color=None, defense_color=None, ball_color=None,
                       **pitch_kwargs):
@@ -149,20 +166,39 @@ def plot_trajectories(sequence,
     defense_color = defense_color or DEFAULT_DEFENSE_COLOR
     ball_color = ball_color or DEFAULT_BALL_COLOR
 
+    # helpers to darken/lighten a color
+    def _darken(color, factor=0.7):
+        rgb = mcolors.to_rgb(color)
+        return mcolors.to_hex([factor * c for c in rgb])
+    def _lighten(color, factor=0.3):
+        rgb = mcolors.to_rgb(color)
+        return mcolors.to_hex([c + (1 - c) * factor for c in rgb])
+
+    # Compute default “pred” colors by darkening the inputs
+    pred_offense_color = pred_offense_color or _darken(offense_color)
+    pred_defense_color = pred_defense_color or _darken(defense_color)
+    pred_ball_color    = pred_ball_color    or _darken(ball_color)
+
+    # Compute GT and pred if not explicitly passed
+    gt_offense_color = gt_offense_color or _lighten(offense_color)
+    gt_defense_color = gt_defense_color or _lighten(defense_color, factor=0.1)
+    gt_ball_color    = gt_ball_color    or _lighten(ball_color)
+
     # Draw pitch once
     if ax is None:
         fig, ax = plot_pitch(**pitch_kwargs)
     else:
         fig = ax.figure
 
-    def _plot(idx, team, color, label_prefix):
+    def _plot(idx, team, color, label_prefix, gt_color, pred_color):
+        # input trajectory
         scaled = extract_player_trajectory(sequence, team, idx)
         coords = descale_trajectory(scaled)
-        plot_player_trajectory(coords, ax=ax, traj_color=color, 
-                               traj_label=f"{label_prefix}-{idx}",
-                               linestyle='-', show_markers=True)
-        
-        # --- ground truth (small markers) ---
+        plot_player_trajectory(coords, ax=ax,
+                               traj_color=color,
+                               traj_label=f"{label_prefix}-{idx}")
+
+        # ground truth
         if ground_truth_seq is not None:
             gt_scaled = extract_player_trajectory(ground_truth_seq, team, idx)
             gt_coords = descale_trajectory(gt_scaled)
@@ -170,10 +206,9 @@ def plot_trajectories(sequence,
                                    traj_color=gt_color,
                                    traj_label=f"{label_prefix}-{idx}-gt",
                                    linestyle=gt_linestyle,
-                                   show_markers=True,       # ← turn them on
-                                   marker_size=20)          # ← much smaller
-            
-        # --- prediction (small markers) ---
+                                   marker_size=20)
+
+        # prediction
         if pred_seq is not None:
             p_scaled = extract_player_trajectory(pred_seq, team, idx)
             p_coords = descale_trajectory(p_scaled)
@@ -181,76 +216,119 @@ def plot_trajectories(sequence,
                                    traj_color=pred_color,
                                    traj_label=f"{label_prefix}-{idx}-pred",
                                    linestyle=pred_linestyle,
-                                   show_markers=True,       # ← on
-                                   marker_size=20)          # ← small
+                                   marker_size=20)
 
     # Offense
     if offense in ['all', True] or isinstance(offense, (list, tuple)):
         idxs = range(11) if offense in ['all', True] else offense
-        for idx in idxs:
-            _plot(idx, 'offense', offense_color, 'offense')
+        for i in idxs:
+            _plot(i, 'offense',
+                  offense_color,       # <-- positional now
+                  'offense',
+                  gt_offense_color,
+                  pred_offense_color)
 
     # Defense
     if defense in ['all', True] or isinstance(defense, (list, tuple)):
         idxs = range(11) if defense in ['all', True] else defense
-        for idx in idxs:
-            _plot(idx, 'defense', defense_color, 'defense')
+        for i in idxs:
+            _plot(i, 'defense',
+                  defense_color,
+                  'defense',
+                  gt_defense_color,
+                  pred_defense_color)
 
     # Ball
     if include_ball:
+        # input
         scaled = extract_player_trajectory(sequence, 'ball')
         coords = descale_trajectory(scaled)
-        plot_player_trajectory(coords, ax=ax, traj_color=ball_color, traj_label='ball')
+        plot_player_trajectory(coords, ax=ax,
+                               traj_color=ball_color,
+                               traj_label='ball',
+                               zorder=5)
+
+        # ground truth
+        if ground_truth_seq is not None:
+            gt_scaled = extract_player_trajectory(ground_truth_seq, 'ball')
+            gt_coords = descale_trajectory(gt_scaled)
+            plot_player_trajectory(gt_coords, ax=ax,
+                                   traj_color=gt_ball_color,
+                                   traj_label='ball-gt',
+                                   linestyle=gt_linestyle,
+                                   marker_size=20,
+                                   zorder=5)
+
+        # prediction
+        if pred_seq is not None:
+            p_scaled = extract_player_trajectory(pred_seq, 'ball')
+            p_coords = descale_trajectory(p_scaled)
+            plot_player_trajectory(p_coords, ax=ax,
+                                   traj_color=pred_ball_color,
+                                   traj_label='ball-pred',
+                                   linestyle=pred_linestyle,
+                                   marker_size=20,
+                                   zorder=5)
 
     # Legend handles
     handles = []
-    # — Input trajectories (solid)
-    if include_ball:
-        lab = 'ball (input)' if (ground_truth_seq is not None or pred_seq is not None) else 'ball'
-        handles.append(Line2D([0], [0],
-                            color=ball_color, lw=1,
-                            linestyle='-',
-                            label=lab))
+    # — Input trajectories
     if offense in ['all', True] or isinstance(offense, (list, tuple)):
-        lab = 'offense (input)' if (ground_truth_seq is not None or pred_seq is not None) else 'offense'
         handles.append(Line2D([0], [0],
-                            color=offense_color, lw=1,
-                            linestyle='-',
-                            label=lab))
+                              color=offense_color, lw=1,
+                              linestyle='-',
+                              label='offense (input)'))
     if defense in ['all', True] or isinstance(defense, (list, tuple)):
-        lab = 'defense (input)' if (ground_truth_seq is not None or pred_seq is not None) else 'defense'
         handles.append(Line2D([0], [0],
-                            color=defense_color, lw=1,
-                            linestyle='-',
-                            label=lab))
+                              color=defense_color, lw=1,
+                              linestyle='-',
+                              label='defense (input)'))
+    if include_ball:
+        handles.append(Line2D([0], [0],
+                              color=ball_color, lw=1,
+                              linestyle='-',
+                              label='ball (input)'))
 
     # — Ground truth
     if ground_truth_seq is not None:
         handles.append(Line2D([0], [0],
-                            color=gt_color, lw=1,
-                            linestyle=gt_linestyle,
-                            label='ground truth'))
+                              color=gt_offense_color, lw=1,
+                              linestyle=gt_linestyle,
+                              label='offense (truth)'))
+        handles.append(Line2D([0], [0],
+                              color=gt_defense_color, lw=1,
+                              linestyle=gt_linestyle,
+                              label='defense (truth)'))
+        if include_ball:
+            handles.append(Line2D([0], [0],
+                                  color=gt_ball_color, lw=1,
+                                  linestyle=gt_linestyle,
+                                  label='ball (truth)'))
 
     # — Prediction
     if pred_seq is not None:
         handles.append(Line2D([0], [0],
-                            color=pred_color, lw=1,
-                            linestyle=pred_linestyle,
-                            label='prediction'))
+                              color=pred_offense_color, lw=1,
+                              linestyle=pred_linestyle,
+                              label='offense (pred)'))
+        handles.append(Line2D([0], [0],
+                              color=pred_defense_color, lw=1,
+                              linestyle=pred_linestyle,
+                              label='defense (pred)'))
+        if include_ball:
+            handles.append(Line2D([0], [0],
+                                  color=pred_ball_color, lw=1,
+                                  linestyle=pred_linestyle,
+                                  label='ball (pred)'))
 
     # — Start & end markers
-    handles.append(Line2D([0], [0],
-                        marker='o',
-                        color='grey',
-                        label='start',
-                        linestyle='None'))
-    handles.append(Line2D([0], [0],
-                        marker='x',
-                        color='grey',
-                        label='end',
-                        linestyle='None'))
+    handles.append(Line2D([0], [0], marker='o', color='grey',
+                          label='start', linestyle='None'))
+    handles.append(Line2D([0], [0], marker='x', color='grey',
+                          label='end', linestyle='None'))
 
     ax.legend(handles=handles, loc='center right')
+
 
     return (fig, ax) if 'fig' in locals() else ax
 
