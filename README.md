@@ -2,7 +2,7 @@
 
 This repository contains tools, code examples, and documentation for developing shallow learning models, with a specific focus on the NFL Big Data Bowl 2025 dataset.
 
-## 🏈 Overview
+## Overview
 
 This project aims to predict player trajectories using data from the 2025 Big Data Bowl competition. It includes:
 
@@ -12,7 +12,7 @@ This project aims to predict player trajectories using data from the 2025 Big Da
 - Notebooks for exploration and experimentation  
 - Instructions for environment setup  
 
-## 📁 Project Structure
+## Project Structure
 
 .\
 ├── code/\
@@ -30,7 +30,7 @@ This project aims to predict player trajectories using data from the 2025 Big Da
 ├── nfl_env.yml\
 └── README.md\
 
-## ⚙️ Setup Instructions
+## Setup Instructions
 
 1. **Install Conda Environment**  
    Create the environment using the provided YAML file:
@@ -52,7 +52,7 @@ This project aims to predict player trajectories using data from the 2025 Big Da
    - `Polars_pipeline.py`
    - `Dataloader_maker.py`
 
-## 🧠 Models
+## Models
 
 ### LSTM Models
 - One-step prediction: `code/Models/LSTM1.ipynb`
@@ -63,6 +63,6 @@ This project aims to predict player trajectories using data from the 2025 Big Da
 - Larger architecture: `code/Models/Big_transformer.ipynb`
 - Physics-informed loss functions: `code/Models/Base_transformer_physics.ipynb`
 
-## 📄 Additional Files
+## Additional Files
 - `environment_instructions.md`: Setup guide
 - `.gitignore`: Git configuration
