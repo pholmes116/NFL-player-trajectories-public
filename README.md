@@ -1,4 +1,4 @@
-# Shallow Learning Projects – NFL Big Data Bowl 2025
+# Predicting NFL player trajectories – NFL Big Data Bowl 2025
 
 This repository contains tools, code examples, and documentation for developing shallow learning models, with a specific focus on the NFL Big Data Bowl 2025 dataset.
 
@@ -28,9 +28,8 @@ This project aims to predict player trajectories using data from the 2025 Big Da
 │   └── ...\
 ├── environment_instructions.md\
 ├── nfl_env.yml\
-├── PROPOSAL.md\
-├── ST456-project-marking.pdf\
 └── README.md\
+
 ## ⚙️ Setup Instructions
 
 1. **Install Conda Environment**  
@@ -65,9 +64,5 @@ This project aims to predict player trajectories using data from the 2025 Big Da
 - Physics-informed loss functions: `code/Models/Base_transformer_physics.ipynb`
 
 ## 📄 Additional Files
-- `PROPOSAL.md`: Project proposal
-- `ST456-project-marking.pdf`: Marking criteria
 - `environment_instructions.md`: Setup guide
 - `.gitignore`: Git configuration
-- `Full-Field Trajectory Prediction in the NFL Using LSTM and
-Transformer Models.PDF` Final Submission Paper
