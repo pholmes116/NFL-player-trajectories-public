@@ -2,6 +2,10 @@
 
 This repository contains tools, code examples, and documentation for developing shallow learning models, with a specific focus on the NFL Big Data Bowl 2025 dataset.
 
+## Authors
+
+Sebastian Ballesteros, Peter Holmes, Juan Bautista Sosa, Mufan Yang
+
 ## Overview
 
 This project aims to predict player trajectories using data from the 2025 Big Data Bowl competition. It includes:
@@ -66,3 +70,7 @@ This project aims to predict player trajectories using data from the 2025 Big Da
 ## Additional Files
 - `environment_instructions.md`: Setup guide
 - `.gitignore`: Git configuration
+
+## Contact
+
+For questions or contributions, reach out via GitHub Issues or email pholmes116@gmail.com.
