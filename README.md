@@ -1,4 +1,4 @@
-# Predicting NFL player trajectories – NFL Big Data Bowl 2025
+# Predicting player trajectories – NFL Big Data Bowl 2025
 
 This repository contains tools, code examples, and documentation for developing shallow learning models, with a specific focus on the NFL Big Data Bowl 2025 dataset.
 
