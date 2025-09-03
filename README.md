@@ -33,7 +33,7 @@ This project aims to predict player trajectories using data from the 2025 Big Da
 ├── environment_instructions.md\
 ├── nfl_env.yml\
 ├── Report.pdf\
-└── README.md\
+└── README.md
 
 ## Setup Instructions
 
